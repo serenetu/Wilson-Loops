@@ -438,11 +438,12 @@ double plqt(int mu, int nu, const int site_coor[4], gsl_matrix_complex * matrixU
             exit(1);
         }
         
+        //cout<<p_num<<endl;
+
         gsl_matrix_complex_free(p);
         gsl_matrix_complex_free(U2);
         gsl_matrix_complex_free(U1);
-
-        //cout<<p_num<<endl;
+        
         return p_num;
     }
     else {
@@ -475,37 +476,22 @@ double plqt_21(int mu, int nu, const int site_coor[4], gsl_matrix_complex * matr
         //site_add(site_addmu, site_coor, mu);
         //site_add(site_addnu, site_coor, nu);
 
-        if (((mu == 0)&(site_coor[0]==0)&(site_coor[1]==0)&(site_coor[2]==0)&(site_coor[3]==0))or((mu == 0)&(site_addmu[0]==0)&(site_addmu[1]==0)&(site_addmu[2]==0)&(site_addmu[3]==0))or((nu == 0)&(site_addmu2[0]==0)&(site_addmu2[1]==0)&(site_addmu2[2]==0)&(site_addmu2[3]==0))or((mu == 0)&(site_addmunu[0]==0)&(site_addmunu[1]==0)&(site_addmunu[2]==0)&(site_addmunu[3]==0))or((mu == 0)&(site_addnu[0]==0)&(site_addnu[1]==0)&(site_addnu[2]==0)&(site_addnu[3]==0))or((nu == 0)&(site_coor[0]==0)&(site_coor[1]==0)&(site_coor[2]==0)&(site_coor[3]==0))){
-            //cout<<"1haha"<<endl;
-        }
-        
         MxtMx_store(matrixU[get_index(mu, site_coor)], p);
         MxtMx_store(matrixU[get_index(mu, site_addmu)], p);
         MxtMx_store(matrixU[get_index(nu, site_addmu2)], p);
 
-        //prtmatrix(p);
-        
         gsl_matrix_complex_memcpy (U1, matrixU[get_index(mu, site_addmunu)]);
         conjtrans(U1);
         MxtMx_store(U1, p);
 
-        //cout<<"U1"<<endl;
-        //prtmatrix(p);
-        
         gsl_matrix_complex_memcpy (U2, matrixU[get_index(mu, site_addnu)]);
         conjtrans(U2);
         MxtMx_store(U2, p);
 
-        //cout<<"U2"<<endl;
-        //prtmatrix(p);
-        
         gsl_matrix_complex_memcpy (U3, matrixU[get_index(nu, site_coor)]);
         conjtrans(U3);
         MxtMx_store(U3, p);
 
-        //cout<<"U3"<<endl;
-        //prtmatrix(p);
-        
         p_num = 1.0 / 3.0 * get_tr_REAL(p);
 
         if (isnan(p_num)){
@@ -520,9 +506,9 @@ double plqt_21(int mu, int nu, const int site_coor[4], gsl_matrix_complex * matr
         }
         
         gsl_matrix_complex_free(p);
-        gsl_matrix_complex_free(U2);
         gsl_matrix_complex_free(U1);
-        
+        gsl_matrix_complex_free(U2);
+        gsl_matrix_complex_free(U3);
         return p_num;
     }
     else {
@@ -549,15 +535,7 @@ double Measure_Avg_11(gsl_matrix_complex * matrixU[]){
                     coor[3] = n;
                     for (int mu = 0; mu < 4; mu++){
                         for(int nu = 0; nu < mu; nu++){
-                            //cout << plqt(mu, nu, coor, matrixU) << endl;
-                            //cout << mu << " "<< coor[0]<<coor[1]<<coor[2]<<coor[3] <<endl;
-                            //cout << get_index(mu, coor) << endl;
                             loop = loop + plqt(mu, nu, coor, matrixU);
-                            /*if (plqt(mu, nu, coor, matrixU) != 0){
-                                countnum++;
-                            }else{
-                                cout <<mu<<nu<<coor[0]<<coor[1]<<coor[2]<<coor[3]<<endl;
-                                }*/
                         }
                     }
                 }
@@ -565,8 +543,6 @@ double Measure_Avg_11(gsl_matrix_complex * matrixU[]){
         }
     }
     loop = (loop / (NumLattice) / (NumLattice) / (NumLattice) / (NumLattice) / 6.0) ;
-    //cout <<countnum<<endl;
-    //loop = loop / countnum;
     return loop;
 }
 
@@ -584,16 +560,7 @@ double Measure_Avg_21(gsl_matrix_complex * matrixU[]){
                     coor[3] = n;
                     for (int mu = 0; mu < 4; mu++){
                         for(int nu = 0; nu < mu; nu++){
-                            //cout << plqt(mu, nu, coor, matrixU) << endl;
-                            //cout << mu << " "<< coor[0]<<coor[1]<<coor[2]<<coor[3] <<endl;
-                            //cout << get_index(mu, coor) << endl;
                             loop = loop + plqt_21(mu, nu, coor, matrixU);
-                            //cout << loop << endl;
-                            if (plqt(mu, nu, coor, matrixU) != 0){
-                                countnum++;
-                            }else{
-                                cout <<mu<<nu<<coor[0]<<coor[1]<<coor[2]<<coor[3]<<endl;
-                            }
                         }
                     }
                 }
@@ -601,9 +568,6 @@ double Measure_Avg_21(gsl_matrix_complex * matrixU[]){
         }
     }
     loop = (loop / (NumLattice) / (NumLattice) / (NumLattice) / (NumLattice) / 6.0) ;
-    //cout << (NumLattice) * (NumLattice) * (NumLattice) * (NumLattice) * 6.0 << endl;
-    //cout <<"count"<<countnum<<endl;
-    //loop = loop / countnum;
     return loop;
 }
 
@@ -711,12 +675,8 @@ void update_matrixU_order1(const int mu, const int site_coor[4], gsl_matrix_comp
     //cout<< randmmm<<endl;
     if ((delta_s>0) && (exp(-delta_s) < randmmm)){
         gsl_matrix_complex_memcpy(matrixU[get_index(mu, site_coor)], old_temp_matrixU);
-        //cout << *acc_n << endl;
-        //int nn = *acc_n + 1;
-        //*acc_n = nn;
     }
-    //int nnn = *acc_N + 1;
-    //*acc_N = nnn;
+    gsl_matrix_complex_free(old_temp_matrixU);
 }
 
 
@@ -997,12 +957,8 @@ void update_matrixU_order2_bac(const int mu, const int site_coor[4], gsl_matrix_
     //cout<< randmmm<<endl;
     if ((delta_s>0) && (exp(-delta_s) < randmmm)){
         gsl_matrix_complex_memcpy(matrixU[get_index(mu, site_coor)], old_temp_matrixU);
-        //cout << *acc_n << endl;
-        //int nn = *acc_n + 1;
-        //*acc_n = nn;
     }
-    //int nnn = *acc_N + 1;
-    //*acc_N = nnn;
+    gsl_matrix_complex_free(old_temp_matrixU);
 }
 
 void update_matrixU_order2(const int mu, const int site_coor[4], gsl_matrix_complex * matrixU[], gsl_matrix_complex * Mmatrix_array[], int * acc_N, int * acc_n){
@@ -1322,6 +1278,7 @@ void update_matrixU_order2(const int mu, const int site_coor[4], gsl_matrix_comp
     if ((delta_s>0) && (exp(-delta_s) < randmmm)){
         gsl_matrix_complex_memcpy(matrixU[get_index(mu, site_coor)], old_temp_matrixU);
     }
+    gsl_matrix_complex_free(old_temp_matrixU);
 }
 
 // update matrixU for all site
@@ -1371,7 +1328,7 @@ void free_MxArray(gsl_matrix_complex * MxArr[], const int elenum){
     }
 }
 
-//
+/*
 void trac_REAL_array(gsl_matrix_complex * matrix_array[], double realtrac[], int NumArr){
     int i = 0;
     for (i =0; i<NumArr; i++){
@@ -1383,14 +1340,12 @@ void trac_IMG_array(gsl_matrix_complex * matrix_array[], double imgtrac[], int N
     for (i =0; i<NumArr; i++){
         imgtrac[i] = get_tr_IMG(matrix_array[i]);
     }
-}
+    }*/
 
 int main(){
     srand(time(NULL));
     int site_coor[4] = {0, 0, 0, 0};
     gsl_matrix_complex * Mmatrix_array[MNumArray];
-    double realtrac[MNumArray];
-    double imgtrac[MNumArray];
     gsl_matrix_complex * matrixU[4 * NumLattice * NumLattice * NumLattice * NumLattice];
     int * acc_N;
     int * acc_n;
@@ -1399,27 +1354,29 @@ int main(){
     init_Mmatrix_array(Mmatrix_array, MNumArray);
     init_matrixU(matrixU, NumDim * NumLattice * NumLattice * NumLattice * NumLattice);
 
-    trac_REAL_array(Mmatrix_array, realtrac, MNumArray);
-    trac_IMG_array(Mmatrix_array, imgtrac, MNumArray);
 
     // open file
-    ofstream order1_11;
-    order1_11.open("order1_11");
-    ofstream order1_21;
-    order1_21.open("order1_21");
+    //ofstream order1_11;
+    //order1_11.open("order1_11");
+    //ofstream order1_21;
+    //order1_21.open("order1_21");
     ofstream order2_11;
     order2_11.open("order2_11");
     ofstream order2_21;
     order2_21.open("order2_21");
 
-    
-    for(int ii = 0; ii < 5001; ii++){
-        if (ii%10 == 0){
+    double Val;
+    for(int ii = 0; ii < 0; ii++){
+        if (ii%1 == 0){
             cout << "iteration_order1: " << ii << endl;
-            //cout << Measure_Avg_11(matrixU) << endl;
-            //cout << Measure_Avg_21(matrixU) << endl;
-            order1_11 << Measure_Avg_11(matrixU) <<endl;
-            order1_21 << Measure_Avg_21(matrixU) <<endl;
+
+            Val = Measure_Avg_11(matrixU);
+            cout << Val << endl;
+            //order1_11 << Measure_Avg_11(matrixU) <<endl;
+
+            Val = Measure_Avg_21(matrixU);
+            cout << Val << endl;
+            //order1_21 << Val <<endl;
         }
         update_allsite_order1(matrixU, Mmatrix_array, acc_N, acc_n);
     }
@@ -1427,12 +1384,16 @@ int main(){
     init_matrixU(matrixU, NumDim * NumLattice * NumLattice * NumLattice * NumLattice);
     
     for(int ii = 0; ii < 5001; ii++){
-        if (ii%10 == 0){
+        if (ii%1 == 0){
             cout << "iteration_order2: " << ii << endl;
-            //cout << Measure_Avg_11(matrixU) << endl;
-            //cout << Measure_Avg_21(matrixU) << endl;
-            order2_11 << Measure_Avg_11(matrixU) <<endl;
-            order2_21 << Measure_Avg_21(matrixU) <<endl;
+
+            Val = Measure_Avg_11(matrixU);
+            cout << Val << endl;
+            order2_11 << Val <<endl;
+
+            Val = Measure_Avg_21(matrixU);
+            cout << Val << endl;
+            order2_21 << Val <<endl;
         }
         update_allsite_order2(matrixU, Mmatrix_array, acc_N, acc_n);
     }
@@ -1440,8 +1401,8 @@ int main(){
     cout << "Hello world!" << endl;
 
     // close files
-    order1_11.close();
-    order1_21.close();
+    //order1_11.close();
+    //order1_21.close();
     order2_11.close();
     order2_21.close();
 
